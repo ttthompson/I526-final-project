@@ -1,0 +1,141 @@
+---
+title: "Final Visualizations"
+author: "Tingting Thompson"
+date: "5/6/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(ggthemes)
+```
+
+```{r}
+t_dat.df <- read_csv("data/t_dat_df.csv")
+```
+
+
+# Price Density Plot Grid
+
+```{r}
+price.df <- read_csv("data/prices.csv")
+```
+
+## mutate fashion_news_frequency
+```{r}
+price.df <- price.df %>% mutate(fashion_news_frequency = ifelse(fashion_news_frequency=="NONE","None",fashion_news_frequency))
+```
+
+```{r}
+(price.df <- price.df %>% mutate(fashion_news_frequency=factor(fashion_news_frequency,ordered = T, levels=c("Monthly","Regularly","None"))))
+```
+
+##generate visual
+```{r}
+
+# create png
+png(filename = "final_visuals/price_density_grid.png", width = 879, height = 564,
+    units = "px")
+
+#create graphic
+price.df %>% ggplot(aes(price)) + geom_density() + facet_grid(fashion_news_frequency~club_member_status) +
+  labs(x="Scaled Price", title="Distribution of Prices Amount Varying Club Statuses and News Subscriptions",subtitle="active members tend to have greater spending at lower price ends")
+
+#export visual
+dev.off()
+```
+
+# Scatter Plot: price ~ age
+
+```{r}
+
+customers <- read_csv("data/customers_wprice.csv")
+```
+
+
+```{r}
+# create png
+png(filename = "final_visuals/price_age_scatter.png", width = 700, height = 700,
+    units = "px")
+
+#create graphic
+price.df %>% ggplot(aes(x=age,y=price, shape = fashion_news_frequency, color = fashion_news_frequency)) + 
+  geom_point() +
+  theme_linedraw() +
+  scale_color_colorblind() + 
+  labs(x="Age (yrs)", y="Average Scaled Price Paid", title = "Average Price Paid vs. Age: Across New Subscription Frequencies", subtitle="no discernable association between age and price paid")
+
+#export visual
+dev.off()
+```
+
+
+# seasonal timerseries
+
+## Create `season` variable
+```{r}
+format(t_dat.df$t_dat[1],"%m")
+
+find_season <- function(dt){
+  if (format(dt,"%m") %in% c("03","04","05")){
+    return("spring")
+  }
+  else if (format(dt,"%m") %in% c("06","07","08")){
+    return("summer")
+  }
+  else if (format(dt,"%m") %in% c("09","10","11")){
+    return("fall")
+  }
+  else if (format(dt,"%m") %in% c("12","01","02")){
+    return("winter")
+  }
+}
+
+t_dat.df$season <- factor(sapply(t_dat.df$t_dat,find_season),levels=c("fall","winter","spring","summer"),ordered=TRUE)
+
+season.colors <- c(fall="#6E260E",winter="#95ced6",spring="#FB6B90",summer="#F08000")
+
+head(t_dat.df)
+```
+
+## generate visual
+```{r}
+# create png
+png(filename = "final_visuals/seasonal_purches_ts.png", width = 865, height = 456,
+    units = "px")
+
+#create graphic
+ggplot(t_dat.df,aes(x=t_dat,y=Freq/1000,fill=season)) + geom_col() +
+  scale_color_colorblind() + 
+  labs(x="Date", y="# Purchases in Thousands",
+       title="Number of Purchases Over Time",
+       subtitle="consistent sales besides slight increases in summer and fall, likely back-to-school shopping and gifts purchases for winter holidays (Black Friday)") + 
+  theme(legend.position="none", plot.title = element_text(hjust = 0.5),plot.subtitle = element_text(hjust = 0.5)) +
+  scale_x_continuous("",breaks=c(as.Date("2018-10-15"),
+                                 as.Date("2019-1-15"),
+                                 as.Date("2019-4-15"),
+                                 as.Date("2019-7-15"),
+                                 as.Date("2019-10-15"),
+                                 as.Date("2020-1-15"),
+                                 as.Date("2020-4-15"),
+                                 as.Date("2020-7-15"),
+                                 as.Date("2020-10-15")),
+                     labels=c("Fall 2018",
+                              "Winter 2018",
+                              "Spring 2019",
+                              "Summer 2019",
+                              "Fall 2019",
+                              "Winter 2019",
+                              "Spring 2020",
+                              "Summer 2020",
+                              "Fall 2020"))
+
+#export visual
+dev.off()
+
+```
+
+
+
