@@ -12,11 +12,6 @@ library(ggplot2)
 library(ggthemes)
 ```
 
-```{r}
-t_dat.df <- read_csv("data/t_dat_df.csv")
-```
-
-
 # Price Density Plot Grid
 
 ```{r}
@@ -47,6 +42,11 @@ price.df %>% ggplot(aes(price)) + geom_density() + facet_grid(fashion_news_frequ
 dev.off()
 ```
 
+```{r}
+rm(price.df)
+```
+
+
 # Scatter Plot: price ~ age
 
 ```{r}
@@ -61,8 +61,8 @@ png(filename = "final_visuals/price_age_scatter.png", width = 700, height = 700,
     units = "px")
 
 #create graphic
-price.df %>% ggplot(aes(x=age,y=price, shape = fashion_news_frequency, color = fashion_news_frequency)) + 
-  geom_point() +
+customers %>% ggplot(aes(x=age,y=avg_price)) + 
+  geom_point() + facet_wrap(~fashion_news_frequency) +
   theme_linedraw() +
   scale_color_colorblind() + 
   labs(x="Age (yrs)", y="Average Scaled Price Paid", title = "Average Price Paid vs. Age: Across New Subscription Frequencies", subtitle="no discernable association between age and price paid")
@@ -71,8 +71,17 @@ price.df %>% ggplot(aes(x=age,y=price, shape = fashion_news_frequency, color = f
 dev.off()
 ```
 
+```{r}
+rm(customers)
+```
+
 
 # seasonal timerseries
+
+```{r}
+t_dat.df <- read_csv("data/t_dat_df.csv")
+```
+
 
 ## Create `season` variable
 ```{r}
