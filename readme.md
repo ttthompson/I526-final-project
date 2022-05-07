@@ -20,6 +20,10 @@ fashion rate (NONE, Regularly, Other). Potentially a good indicator of interest 
 
 The data can be downloaded from Kaggle in the competition showcase, upon conclusion of the deadline: https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data
 
+I also placed the data in this shared google drive folder:
+https://drive.google.com/drive/folders/1bwqk0qFqMTfvSHwN7Faa72evMaiikLBN?usp=sharing
+
+
 
 ABOUT THE CODE:
 
