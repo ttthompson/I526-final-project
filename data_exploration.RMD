@@ -1,0 +1,288 @@
+---
+title: "Data Exploration"
+author: "Tingting Thompson"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+```
+
+## Data Upload
+```{r}
+articles <- read_csv("data/articles.csv")
+customers <- read_csv("data/customers.csv")
+transactions <- read_csv("data/transactions_train.csv")
+```
+
+
+```{r}
+
+dim(articles)
+dim(customers)
+dim(transactions)
+
+```
+
+# Variable Exploration
+
+## club_member_status
+
+```{r}
+sum(is.na(customers$club_member_status))
+table(customers$club_member_status)
+```
+
+```{r}
+ggplot(customers, aes(club_member_status)) + geom_bar()
+```
+
+
+## fashion_news_frequency
+
+```{r}
+sum(is.na(customers$fashion_news_frequency))
+table(customers$fashion_news_frequency)
+```
+
+> "None" and "NONE", seem to be the same, with differing naming, will stick with the capitalized version "None"
+
+```{r}
+customers <- customers %>% mutate(fashion_news_frequency = ifelse(fashion_news_frequency=="NONE","None",fashion_news_frequency))
+```
+
+> Let's make it a ordered value
+
+```{r}
+class(customers$fashion_news_frequency) #want fct
+```
+
+```{r}
+(customers <- customers %>% mutate(fashion_news_frequency=factor(fashion_news_frequency,ordered = T, levels=c("None","Regularly","Monthly"))))
+```
+
+```{r}
+ggplot(customers, aes(fashion_news_frequency)) + geom_bar()
+```
+
+## age
+
+```{r}
+
+sum(is.na(customers$age))
+hist(customers$age)
+```
+
+
+
+## postal_code
+
+```{r}
+sum(is.na(customers$postal_code))
+length(unique(customers$postal_code))
+
+```
+> 352899 unique ZIP-codes
+
+## t_dat
+
+```{r}
+class(transactions$t_dat)
+head(transactions$t_dat)
+
+```
+
+
+### creating a smaller data frame to work with...
+
+```{r}
+data.frame(table(transactions$t_dat[100000:160000]))
+```
+
+```{r}
+t_dat.df <- read_csv("data/t_dat_df.csv")
+```
+
+
+```{r}
+#t_dat.df <- data.frame(table(transactions$t_dat))
+```
+
+```{r}
+#head(t_dat.df)
+```
+```{r}
+#names(t_dat.df) <- c("t_dat","Freq")
+```
+
+
+save for later
+```{r}
+#write.table(t_dat.df,"data/t_dat_df.csv",sep=",",row.names=F)
+```
+
+
+### initial timeseries
+```{r}
+ggplot(t_dat.df,aes(t_dat,Freq)) + geom_col()
+```
+
+Testing format(<date>) functionality
+```{r}
+
+format(t_dat.df$t_dat[1],"%y") == "18"
+
+```
+
+### 2018-2020 timerseries
+```{r}
+ts.18 <- t_dat.df %>% filter(format(t_dat,"%y")=="18") %>% 
+  ggplot(aes(x=t_dat,y=Freq)) + geom_col() + 
+  xlim(as.Date("2018-01-01"),as.Date("2018-12-31")) + ylim(0,200000) +
+  labs(x="",y="",title="2018")
+ts.19 <- t_dat.df %>% filter(format(t_dat,"%y")=="19") %>% 
+  ggplot(aes(x=t_dat,y=Freq)) + geom_col() + 
+  xlim(as.Date("2019-01-01"),as.Date("2019-12-31")) + ylim(0,200000) +
+  labs(x="",y="",title="2019")
+ts.20 <- t_dat.df %>% filter(format(t_dat,"%y")=="20") %>% 
+  ggplot(aes(x=t_dat,y=Freq)) + geom_col() + 
+  xlim(as.Date("2020-01-01"),as.Date("2020-12-31")) + ylim(0,200000) +
+  labs(x="Date",y="",title="2020")
+gridExtra::grid.arrange(ts.18,ts.19,ts.20)
+```
+
+
+
+
+
+
+
+
+
+
+## price
+
+```{r}
+sum(is.na(transactions$price))
+```
+
+```{r}
+
+transactions %>% ggplot(aes(x="",y=price)) + geom_violin()
+
+```
+> it is clear there are outlier prices, that are not suitable for appearance in overall trend. I will be removing these using basic IQR outlier definition
+
+```{r}
+Q3 <- quantile(transactions$price)["75%"]
+Q1 <- quantile(transactions$price)["25%"]
+is_outlier <- function(p) (p > Q3 + (1.5*(Q3-Q1))) | (p < Q1 - (1.5*(Q3-Q1)))
+
+```
+
+```{r}
+is_outlier(Q3)
+is_outlier(Q1)
+is_outlier(0)
+is_outlier(-1)
+```
+
+```{r}
+(inter.trans <- transactions %>% filter(is_outlier(price) != T))
+```
+
+```{r}
+hist(inter.trans$price)
+```
+> far more reasonable distribution
+
+```{r}
+inter.trans %>% ggplot(aes(price)) + geom_density()
+
+```
+### subsetting
+> let's create a new data set for price only
+
+```{r}
+price.df <- inter.trans %>% select(customer_id,price)
+
+```
+
+```{r}
+price.df <- customers %>% select(customer_id,club_member_status,fashion_news_frequency,age) %>% merge(price.df,by="customer_id")
+```
+
+```{r}
+head(price.df)
+```
+
+> let's export this
+
+```{r}
+write.table(price.df, "data/prices.csv",sep=",",row.names=F)
+```
+
+### grouping price
+
+```{r}
+(sub.trans <- transactions[500:1000,] %>% 
+  select(customer_id,price) %>% 
+  group_by(customer_id) %>% 
+  summarize(avg_price = mean(price)))
+```
+
+```{r}
+customers2 <- merge(customers, sub.trans, by="customer.ID")
+```
+
+```{r}
+write.table(customers2, "data/customers_wprice.csv",sep=",",row.names=F)
+```
+
+
+## product_type_no
+
+```{r}
+
+```
+
+
+## product_group_name
+
+```{r}
+
+```
+
+
+## graphical_appearance_no
+
+```{r}
+
+```
+
+
+## colour_group_code
+
+```{r}
+
+```
+
+
+
+```{r}
+
+head(customers)
+
+```
+
+# bubble graphic
+
+1. generate seasons column in transactions
+2. split transactions by seasons & save files
+3. isolate by product_type_no, product_group_name, graphical_appearance_no, and color_group_code
+4. generate, histogram rankings and/or bubble graphic
+
+
+
