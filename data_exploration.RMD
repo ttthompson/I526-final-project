@@ -227,14 +227,14 @@ write.table(price.df, "data/prices.csv",sep=",",row.names=F)
 ### grouping price
 
 ```{r}
-(sub.trans <- transactions[500:1000,] %>% 
+(sub.trans <- transactions %>% 
   select(customer_id,price) %>% 
   group_by(customer_id) %>% 
   summarize(avg_price = mean(price)))
 ```
 
 ```{r}
-customers2 <- merge(customers, sub.trans, by="customer.ID")
+(customers2 <- merge(customers, sub.trans, by="customer_id"))
 ```
 
 ```{r}

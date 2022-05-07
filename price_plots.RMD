@@ -1,0 +1,134 @@
+---
+title: "Pricing Plots"
+author: "Tingting Thompson"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+```
+
+
+```{r}
+price.df <- read_csv("data/prices.csv")
+```
+
+```{r}
+price.df <- price.df %>% mutate(fashion_news_frequency = ifelse(fashion_news_frequency=="NONE","None",fashion_news_frequency))
+```
+
+```{r}
+(price.df <- price.df %>% mutate(fashion_news_frequency=factor(fashion_news_frequency,ordered = T, levels=c("Monthly","Regularly","None"))))
+```
+
+
+
+### density plots by fashion_news_frequency and club_member_status
+
+```{r}
+price.df %>% ggplot(aes(price, color=fashion_news_frequency)) + geom_density()
+
+```
+
+```{r}
+price.df %>% ggplot(aes(price, color=club_member_status)) + geom_density()
+
+```
+
+### violin
+
+```{r}
+price.df %>% ggplot(aes(y=price, x=fashion_news_frequency)) + geom_violin()
+```
+
+```{r}
+price.df %>% ggplot(aes(y=price, x=club_member_status)) + geom_violin()
+```
+
+### histograms
+
+```{r}
+price.df %>% ggplot(aes(price, color=fashion_news_frequency)) + geom_histogram()
+
+```
+
+```{r}
+price.df %>% ggplot(aes(price, color=club_member_status)) + geom_histogram()
+
+```
+
+
+
+### grid histogram
+
+```{r}
+price.df %>% ggplot(aes(price)) + geom_histogram() + facet_wrap(~fashion_news_frequency)
+
+```
+
+```{r}
+price.df %>% ggplot(aes(price)) + geom_histogram() + facet_wrap(~club_member_status)
+
+```
+
+```{r}
+price.df %>% ggplot(aes(price)) + geom_histogram() + facet_grid(fashion_news_frequency~club_member_status)
+
+```
+
+
+### grid density
+
+```{r}
+price.df %>% ggplot(aes(price)) + geom_density() + facet_wrap(~fashion_news_frequency)
+
+```
+
+```{r}
+price.df %>% ggplot(aes(price)) + geom_density() + facet_wrap(~club_member_status)
+
+```
+
+```{r}
+price.df %>% ggplot(aes(price)) + geom_density() + facet_grid(fashion_news_frequency~club_member_status) +
+  labs(x="Scaled Price", title="Distribution of Prices Amount Varying Club Statuses and News Subscriptions",subtitle="active members tend to have greater spending at lower price ends")
+
+```
+
+> hypothesis: as a brand catering to 'fast fashion', their primary consumers are looking to spend small amounts, frequently, to stay up with the newest fashion. The most active subscrptions, monthly, are a bit more evenly distributed as they perhaps spend regardless of the sale events.
+
+
+### scatter plot
+```{r}
+
+price.df %>% ggplot(aes(x=age,y=price)) + geom_point() + facet_grid(fashion_news_frequency~club_member_status)
+
+```
+
+```{r}
+
+price.df %>% ggplot(aes(x=age,y=price,color=fashion_news_frequency)) + geom_point()
+
+```
+
+```{r}
+
+price.df %>% ggplot(aes(x=age,y=price,color=club_member_status)) + geom_point() 
+
+```
+
+Next steps:
+1. mark the high activity points
+2. analyze outlier rates and distribution amoung groups
+
+
+# Hypothesis 1:
+whether price is related to purchasing outcome in a sample of N = 1
+million after controlling for the effect of customer age, location, and fashion inclination
+(fashion_news_frequency).
+
+```{r}
+
+```

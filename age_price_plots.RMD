@@ -1,0 +1,51 @@
+---
+title: "Age vs Price for Subscription Frequencies"
+author: "Tingting Thompson"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(ggthemes)
+```
+
+
+```{r}
+price.df <- read_csv("data/prices.csv")
+```
+
+```{r}
+price.df <- price.df %>% mutate(fashion_news_frequency = ifelse(fashion_news_frequency=="NONE","None",fashion_news_frequency))
+```
+
+```{r}
+(price.df <- price.df %>% mutate(fashion_news_frequency=factor(fashion_news_frequency,ordered = T, levels=c("Monthly","Regularly","None"))))
+```
+
+```{r}
+head(price.df)
+```
+
+```{r}
+price.df[500:1000,] %>% group_by(customer_id) %>% summarize(avg_price = mean(price), age = mean(age), fashion_news_frequency = first(fashion_news_frequency))
+```
+
+
+```{r}
+price.df %>% ggplot(aes(x=age,y=price, shape = fashion_news_frequency, color = fashion_news_frequency)) + 
+  geom_jitter() +
+  theme_linedraw() +
+  scale_color_colorblind() + 
+  labs(x="Age (yrs)", y="Average Scaled Price Paid", title = "Average Price Paid vs. Age: Across New Subscription Frequencies", subtitle="no discernable association between age and price paid")
+```
+
+
+
+
+
+
+
+
